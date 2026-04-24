@@ -11,7 +11,8 @@ CORS(app)
 DEEPSEEK_KEY = "sk-7e23691c8cad4eb1ba993483657c8484"   # 改这里
 DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
 
-DB_PATH = "careers.db"
+import os
+DB_PATH = os.path.join(os.path.dirname(__file__), "careers.db")
 
 
 def get_personality_types():
