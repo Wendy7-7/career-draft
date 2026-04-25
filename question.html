@@ -1,4 +1,3 @@
-<!-- question.html（适配新版 questions.js 结构） -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,23 +6,23 @@
 <title>Youth-AI:Career Leap</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: #1e293b; background-color: #ffffff; -webkit-font-smoothing: antialiased; }
-.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-.navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100; }
-.logo { font-weight: 700; font-size: 1.25rem; color: #0f172a; }
-.nav-links { display: flex; gap: 2.5rem; list-style: none; }
-.nav-links a { text-decoration: none; color: #334155; font-weight: 500; font-size: 0.95rem; transition: color 0.2s; }
-.nav-links a:hover { color: #2563eb; }
-.btn { display: inline-block; padding: 10px 24px; background: #2563eb; color: white; border-radius: 6px; font-weight: 500; text-decoration: none; border: none; cursor: pointer; }
-.btn:hover { background: #1d4ed8; transform: translateY(-2px); }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-.section { padding: 5rem 0; }
-h1 { font-size: 2rem; font-weight: 700; color: #0f172a; margin-bottom: 1.5rem; }
-.option-item { cursor: pointer; padding: 6px 12px !important; color: #000 !important; user-select: none; }
-.option-item.active { background: #0d6efd !important; color: white !important; }
-.loading { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #0d6efd; border-radius: 50%; animation: spin 1s linear infinite; z-index: 999; }
-@keyframes spin { 0% { transform: translate(-50%,-50%) rotate(0deg); } 100% { transform: translate(-50%,-50%) rotate(360deg); } }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height:1.6; color:#1e293b; background:#fff; }
+.container { max-width:1200px; margin:0 auto; padding:0 24px; }
+.navbar { display:flex; justify-content:space-between; align-items:center; padding:1rem 2rem; background:rgba(255,255,255,0.9); backdrop-filter:blur(8px); border-bottom:1px solid #e2e8f0; position:sticky; top:0; z-index:100; }
+.logo { font-weight:700; font-size:1.25rem; color:#0f172a; }
+.nav-links { display:flex; gap:2.5rem; list-style:none; }
+.nav-links a { text-decoration:none; color:#334155; font-weight:500; font-size:0.95rem; }
+.nav-links a:hover { color:#2563eb; }
+.btn { display:inline-block; padding:10px 24px; background:#2563eb; color:#fff; border-radius:6px; font-weight:500; text-decoration:none; border:none; cursor:pointer; }
+.btn:hover { background:#1d4ed8; }
+.btn:disabled { opacity:0.6; cursor:not-allowed; }
+.section { padding:5rem 0; }
+h1 { font-size:2rem; font-weight:700; color:#0f172a; margin-bottom:1.5rem; }
+.option-item { cursor:pointer; padding:6px 12px !important; color:#000 !important; user-select:none; }
+.option-item.active { background:#0d6efd !important; color:#fff !important; }
+.loading { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:40px; height:40px; border:4px solid #f3f3f3; border-top:4px solid #0d6efd; border-radius:50%; animation:spin 1s linear infinite; z-index:999; }
+@keyframes spin { 0%{transform:translate(-50%,-50%) rotate(0deg);} 100%{transform:translate(-50%,-50%) rotate(360deg);} }
 </style>
 </head>
 <body>
@@ -34,6 +33,7 @@ h1 { font-size: 2rem; font-weight: 700; color: #0f172a; margin-bottom: 1.5rem; }
     <li><a href="result.html">Result</a></li>
   </ul>
 </nav>
+
 <section class="section">
   <div class="container">
     <h1>Survey</h1>
@@ -41,49 +41,81 @@ h1 { font-size: 2rem; font-weight: 700; color: #0f172a; margin-bottom: 1.5rem; }
     <button id="submit" class="btn mt-4">Submit</button>
   </div>
 </section>
+
 <div class="loading" id="loading"></div>
+
 <script src="questions.js"></script>
 <script>
 let answers = {};
 let box = document.getElementById("box");
 let btn = document.getElementById("submit");
+
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof questions === 'undefined' || questions.length === 0) {
     box.innerHTML = "<p style='color:red;'>⚠️ 题目数据加载失败，请检查questions.js文件！</p>";
     return;
   }
+
+  // 渲染题目
   questions.forEach(q => {
-    let div = document.createElement("div");
+    const div = document.createElement("div");
     div.className = "card p-3 mb-3 shadow-sm";
+
+    // 生成选项 HTML
     const optionsHTML = (q.options || []).map(opt => `
       <div style="margin-bottom:8px;">
-        <span class="option-item badge bg-light p-2" style="color:#000!important;" data-tag="${opt.tag}" data-score="${opt.score}">${opt.text_en}</span>
-        <span style="color:#000;font-size:0.8em;display:block;margin-top:5px;">${opt.text}</span>
+        <span class="option-item badge bg-light p-2"
+              data-tag="${opt.tag}"
+              data-score="${opt.score}">
+          ${opt.text_en}
+        </span>
+        <span style="color:#000;font-size:0.8em;display:block;margin-top:5px;">
+          ${opt.text}
+        </span>
       </div>
     `).join('');
-    div.innerHTML = `<h5 style="color:#333;font-weight:bold;">${q.title_en}</h5><p style="color:#888;font-size:0.9em;margin:5px 0 10px 0;">${q.title}</p><div class="d-flex gap-2 mt-2 flex-wrap" data-id="${q.id}">${optionsHTML}</div>`;
+
+    div.innerHTML = `
+      <h5 style="color:#333;font-weight:bold;">${q.title_en}</h5>
+      <p style="color:#888;font-size:0.9em;margin:5px 0 10px 0;">${q.title}</p>
+      <div class="d-flex gap-2 mt-2 flex-wrap" data-id="${q.id}">
+        ${optionsHTML}
+      </div>
+    `;
     box.appendChild(div);
   });
+
+  // 点击选项：单选且可取消
   box.addEventListener("click", function(e) {
     if (!e.target.classList.contains("option-item")) return;
-    const qc = e.target.closest(".d-flex[data-id]");
-    const pid = qc.dataset.id;
-    if (e.target.classList.contains("active")) {
-      e.target.classList.remove("active");
+    const currentOption = e.target;
+    const questionContainer = currentOption.closest(".d-flex[data-id]");
+    const pid = questionContainer.dataset.id;
+
+    if (currentOption.classList.contains("active")) {
+      currentOption.classList.remove("active");
       delete answers[pid];
     } else {
-      qc.querySelectorAll(".option-item").forEach(el => el.classList.remove("active"));
-      e.target.classList.add("active");
-      answers[pid] = { tag: e.target.dataset.tag, score: parseInt(e.target.dataset.score) || 0 };
+      questionContainer.querySelectorAll(".option-item").forEach(el => el.classList.remove("active"));
+      currentOption.classList.add("active");
+      answers[pid] = {
+        tag: currentOption.dataset.tag,
+        score: parseInt(currentOption.dataset.score) || 0
+      };
     }
     btn.disabled = Object.keys(answers).length !== questions.length;
   });
+
+  // 提交
   btn.addEventListener("click", function() {
     const tagScores = {};
-    Object.values(answers).forEach(item => { tagScores[item.tag] = (tagScores[item.tag] || 0) + item.score; });
+    Object.values(answers).forEach(item => {
+      tagScores[item.tag] = (tagScores[item.tag] || 0) + item.score;
+    });
     sessionStorage.setItem("userTags", JSON.stringify(tagScores));
     window.location.href = "result.html";
   });
+
   document.getElementById('loading').style.display = 'none';
   btn.disabled = true;
 });
