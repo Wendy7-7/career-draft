@@ -44,6 +44,20 @@
             padding: 10px 30px;
             text-decoration: none;
         }
+        .ai-box {
+            background-color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+        }
+        .ai-box h6 {
+            color: #0f172a;
+            font-weight: bold;
+        }
+        .ai-box ul {
+            color: #334155;
+            padding-left: 1.2rem;
+        }
     </style>
 </head>
 <body>
@@ -65,11 +79,11 @@
         </div>
 
         <!-- 匹配人格类型 -->
-        <div id="personality-info" class="card p-4 mb-4" style="display:none;">
+        <div class="card p-4 mb-4">
             <h5 class="mb-3">🧠 你的人格类型：<span id="type-name"></span></h5>
             <p><strong>特质描述：</strong><span id="type-traits"></span></p>
             <p><strong>自带能力：</strong><span id="type-abilities"></span></p>
-            <p><strong>适配你这种思维模式的原因：</strong><span id="type-reason"></span></p>
+            <p><strong>适配原因：</strong><span id="type-reason"></span></p>
         </div>
 
         <!-- 推荐职业卡片 -->
@@ -80,11 +94,11 @@
             </div>
         </div>
 
-        <!-- AI 个性化建议 -->
+        <!-- AI 建议（根据答题结果动态匹配） -->
         <div class="card p-4 mb-4">
             <h5 class="mb-3">🤖 AI 个性化发展建议</h5>
-            <div id="ai-suggestion" class="text-secondary">
-                正在生成建议，请稍候...
+            <div id="ai-suggestion" class="ai-box">
+                <!-- 动态渲染 -->
             </div>
         </div>
 
@@ -94,14 +108,141 @@
     </main>
 
     <script>
-        // 读取答题页存下的用户标签
+        // ========== 读取用户标签得分 ==========
         const userTags = JSON.parse(sessionStorage.getItem('userTags') || '{}');
         if (Object.keys(userTags).length === 0) {
             document.body.innerHTML = '<div class="container mt-5 text-center"><h3>⚠️ 未找到测评数据，请先完成问卷。</h3><a href="question.html" class="btn btn-primary">开始测评</a></div>';
             throw new Error('无数据');
         }
 
-        // 1. 绘制雷达图
+        // ========== 预置人格类型数据（来自你的 Excel 数据库） ==========
+        const PERSONALITY_DATA = {
+            "逻辑": {
+                type_name: "逻辑分析型",
+                traits: "思维缜密理性，擅长拆解复杂问题，注重数据与逻辑，做事严谨有条理",
+                abilities: "超强逻辑推演、理性思辨拆解能力；数据敏感挖掘、定量分析建模能力；客观冷静独立判断能力",
+                reason: "天生擅长理性复盘、数据核算、规律研判，和金融审计、数据分析、技术编程岗位完美匹配",
+                careers: ["数据分析师", "软件工程师", "审计师", "金融分析师"],
+                suggestion: `
+                    <p><strong>📈 基于你偏好“逻辑”特质的个性化发展建议</strong></p>
+                    <p>你的理性和分析能力突出，以下是具体发展建议：</p>
+                    <div style="margin-bottom:1.5rem;">
+                        <h6>【数据分析师】</h6>
+                        <ul>
+                            <li><strong>成长路径：</strong>掌握 Excel/SQL → 学习 Python (Pandas, Matplotlib) → 完成 Kaggle 入门竞赛 → 寻找实习积累业务经验</li>
+                            <li><strong>学习资源：</strong>《利用 Python 进行数据分析》、Coursera Google Data Analytics 专项课程</li>
+                            <li><strong>行业前景：</strong>未来五年需求强劲，与 AI、商业智能结合的分析岗薪资增长迅速</li>
+                        </ul>
+                    </div>
+                    <div style="margin-bottom:1.5rem;">
+                        <h6>【软件工程师】</h6>
+                        <ul>
+                            <li><strong>成长路径：</strong>数据结构与算法 → 精通一门语言（Java/Python）→ 参与开源项目 → 争取大厂实习</li>
+                            <li><strong>学习资源：</strong>LeetCode、慕课网、GitHub 开源项目</li>
+                            <li><strong>行业前景：</strong>持续高需求，建议向 AI 工程师或全栈方向发展</li>
+                        </ul>
+                    </div>
+                `
+            },
+            "社交": {
+                type_name: "社交沟通型",
+                traits: "擅长表达共情，热衷与人打交道，团队协作力强，擅长维护关系与协调沟通",
+                abilities: "超强语言表达、共情倾听能力；多方协调谈判、人脉维护社交能力；临场应变、公众表达说服能力",
+                reason: "天生擅长人际交往、共情说服、资源对接，和市场销售、公关HR、商务顾问类岗位完美契合",
+                careers: ["人力资源专员", "市场营销专员", "公关专员", "销售顾问"],
+                suggestion: `
+                    <p><strong>📈 基于你偏好“社交”特质的个性化发展建议</strong></p>
+                    <p>你的人际交往和沟通能力突出，以下是具体发展建议：</p>
+                    <div style="margin-bottom:1.5rem;">
+                        <h6>【人力资源专员】</h6>
+                        <ul>
+                            <li><strong>成长路径：</strong>学习劳动法基础 → 考取人力资源管理师 → 从招聘/员工关系模块入手积累经验</li>
+                            <li><strong>学习资源：</strong>《人力资源管理》、三茅人力资源网、SHRM 认证课程</li>
+                            <li><strong>行业前景：</strong>企业对人才管理越发重视，HRBP 方向薪资成长空间大</li>
+                        </ul>
+                    </div>
+                    <div style="margin-bottom:1.5rem;">
+                        <h6>【市场营销专员】</h6>
+                        <ul>
+                            <li><strong>成长路径：</strong>掌握用户调研方法 → 学习数字营销工具 → 参与实际推广项目积累案例</li>
+                            <li><strong>学习资源：</strong>《营销管理》、HubSpot 免费课程、小红书/抖音运营实操</li>
+                            <li><strong>行业前景：</strong>数字化营销人才缺口大，懂数据分析的营销人更具竞争力</li>
+                        </ul>
+                    </div>
+                `
+            },
+            "创意": {
+                type_name: "创意艺术型",
+                traits: "想象力丰富，追求独特创新，反感刻板流程，擅长用灵感打造个性化内容与作品",
+                abilities: "天马行空想象力、突破性创新构思能力；高级审美感知、视觉文字内容创作能力；跨界脑洞融合、潮流趋势捕捉能力",
+                reason: "天生不受条条框框束缚，擅长审美创作、新鲜策划、内容革新，是设计、文案编导类岗位的天赋型人选",
+                careers: ["平面设计师", "文案策划", "新媒体编导", "艺术指导"],
+                suggestion: `
+                    <p><strong>📈 基于你偏好“创意”特质的个性化发展建议</strong></p>
+                    <p>你的想象力和创造力突出，以下是具体发展建议：</p>
+                    <div style="margin-bottom:1.5rem;">
+                        <h6>【平面设计师】</h6>
+                        <ul>
+                            <li><strong>成长路径：</strong>掌握 Figma/PS/AI → 临摹优秀作品建立审美 → 接 freelance 积累作品集 → 投递设计岗</li>
+                            <li><strong>学习资源：</strong>站酷、Dribbble、Behance、《设计中的设计》</li>
+                            <li><strong>行业前景：</strong>UI/UX 方向薪资更高，建议向产品设计延伸</li>
+                        </ul>
+                    </div>
+                    <div style="margin-bottom:1.5rem;">
+                        <h6>【文案策划】</h6>
+                        <ul>
+                            <li><strong>成长路径：</strong>大量阅读优秀文案 → 模仿写作建立语感 → 运营个人公众号积累作品 → 投递广告/内容公司</li>
+                            <li><strong>学习资源：</strong>《文案的基本修养》、广告门、数英网</li>
+                            <li><strong>行业前景：</strong>优质内容创作者始终稀缺，短视频脚本方向需求旺盛</li>
+                        </ul>
+                    </div>
+                `
+            },
+            "价值观": {
+                type_name: "务实稳健型",
+                traits: "注重实际回报与稳定性，做事脚踏实地，倾向于选择低风险、高确定性的路径",
+                abilities: "务实决策、风险规避能力；长期规划、稳步推进能力；实际利益评估、成本收益分析能力",
+                reason: "天生务实、追求稳定与发展平衡，和国企事业编、金融财务、项目运营等稳健型岗位高度匹配",
+                careers: ["公务员/事业编", "财务会计", "运营经理", "项目管理"],
+                suggestion: `
+                    <p><strong>📈 基于你偏好“价值观”特质的个性化发展建议</strong></p>
+                    <p>你的务实和规划能力突出，以下是具体发展建议：</p>
+                    <div style="margin-bottom:1.5rem;">
+                        <h6>【公务员/事业编】</h6>
+                        <ul>
+                            <li><strong>成长路径：</strong>提前了解考试大纲 → 系统备考行测申论 → 关注国考省考时间线 → 面试模拟训练</li>
+                            <li><strong>学习资源：</strong>粉笔公考、中公教育、历年真题</li>
+                            <li><strong>行业前景：</strong>稳定性强，福利完善，适合追求长期稳定发展</li>
+                        </ul>
+                    </div>
+                    <div style="margin-bottom:1.5rem;">
+                        <h6>【运营经理】</h6>
+                        <ul>
+                            <li><strong>成长路径：</strong>从运营专员做起 → 掌握数据分析与项目管理 → 积累跨部门协作经验 → 晋升运营经理</li>
+                            <li><strong>学习资源：</strong>《运营之光》、人人都是产品经理社区、MBA 基础课程</li>
+                            <li><strong>行业前景：</strong>互联网和传统企业都需要运营人才，发展路径清晰</li>
+                        </ul>
+                    </div>
+                `
+            }
+        };
+
+        // ========== 根据最高分标签匹配人格 ==========
+        let topTag = null;
+        let topScore = 0;
+        for (const [tag, score] of Object.entries(userTags)) {
+            if (score > topScore) {
+                topScore = score;
+                topTag = tag;
+            }
+        }
+
+        // 如果最高分标签没有预设，默认用"逻辑"
+        const matchedPersonality = PERSONALITY_DATA[topTag] || PERSONALITY_DATA["逻辑"];
+
+        // ========== 渲染结果 ==========
+
+        // 雷达图
         const ctx = document.getElementById('radarChart').getContext('2d');
         new Chart(ctx, {
             type: 'radar',
@@ -128,72 +269,25 @@
             }
         });
 
-        // 2. 请求后端匹配接口
-        const API_BASE = '';  // 本地测试用，部署时改公网地址
+        // 人格信息
+        document.getElementById('type-name').innerText = matchedPersonality.type_name;
+        document.getElementById('type-traits').innerText = matchedPersonality.traits;
+        document.getElementById('type-abilities').innerText = matchedPersonality.abilities;
+        document.getElementById('type-reason').innerText = matchedPersonality.reason;
 
-        fetch(API_BASE + '/api/match', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tags: userTags })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (!data || !data.success) {
-                throw new Error(data?.error || '匹配失败');
-            }
-
-            // 显示人格信息
-            const personality = data.personality;
-            if (personality) {
-                document.getElementById('personality-info').style.display = 'block';
-                document.getElementById('type-name').innerText = personality.type_name;
-                document.getElementById('type-traits').innerText = personality.traits;
-                document.getElementById('type-abilities').innerText = personality.abilities;
-                document.getElementById('type-reason').innerText = personality.reason;
-            }
-
-            // 渲染职业卡片
-            renderCareerCards(data.careers);
-
-            // 3. 拿到推荐职业后，请求 AI 建议
-            return fetch(API_BASE + '/api/ai-suggestion', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    tags: userTags,
-                    personality: personality,
-                    careers: data.careers
-                })
-            });
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data && data.success) {
-                document.getElementById('ai-suggestion').innerText = data.suggestion;
-            } else {
-                document.getElementById('ai-suggestion').innerText = 'AI 建议生成失败：' + (data?.error || '未知错误');
-            }
-        })
-        .catch(err => {
-            document.getElementById('ai-suggestion').innerText = '网络异常，无法获取结果：' + err.message;
-        });
-
-        // 渲染职业卡片
-        function renderCareerCards(careers) {
-            const container = document.getElementById('career-cards');
-            if (!careers || careers.length === 0) {
-                container.innerHTML = '<p class="text-muted">暂无推荐职业</p>';
-                return;
-            }
-            container.innerHTML = careers.map(c => `
-                <div class="col-md-6 col-lg-3">
-                    <div class="card career-card p-3 text-center">
-                        <h6 class="fw-bold">${c}</h6>
-                        <p class="small text-muted mb-0">推荐职业</p>
-                    </div>
+        // 推荐职业卡片
+        const careerContainer = document.getElementById('career-cards');
+        careerContainer.innerHTML = matchedPersonality.careers.map(c => `
+            <div class="col-md-6 col-lg-3">
+                <div class="card career-card p-3 text-center">
+                    <h6 class="fw-bold">${c}</h6>
+                    <p class="small text-muted mb-0">推荐职业</p>
                 </div>
-            `).join('');
-        }
+            </div>
+        `).join('');
+
+        // AI 建议
+        document.getElementById('ai-suggestion').innerHTML = matchedPersonality.suggestion;
     </script>
 </body>
 </html>
